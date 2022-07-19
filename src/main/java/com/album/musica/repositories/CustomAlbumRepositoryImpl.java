@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,24 +41,38 @@ public class CustomAlbumRepositoryImpl implements CustomAlbumRepository {
 
 
         List<Object[]> objects = query.getResultList();
-        var albums = objetListToAlbumList(objects);
 
-        for (var album : albums) {
-            var albumSalvo = entityManager.find(Album.class, album.getID());
-
-            if(Objects.isNull(albumSalvo)) {
-                continue;
-            }
-
-            album.setMusicas(albumSalvo.getMusicas());
-            album.setParticipantes(albumSalvo.getParticipantes());
-        }
-
-
-        return new PageImpl<Album>(albums, pageable, albums.size());
+        return findRelationGroup(pageable, objetListToAlbumList(objects));
     }
 
-    List<Album> objetListToAlbumList(List<Object[]> rawResult) {
+    @Override
+    public Page<Album> findAllAndOrderByArtista(Pageable pageable, Long id) {
+
+        String orderBy = pageable.getSort().toString().replaceAll(":", "");
+        var query = entityManager.createNativeQuery(
+                        "select " +
+                                " album.id id, " +
+                                " album.nome nome, " +
+                                " album.ano ano, " +
+                                " sum(musica.duracao) as duracao " +
+                                "from album, musica, album_musica, artista " +
+                                "where album_musica.album_id = album.id " +
+                                " and album_musica.musica_id = musica.id " +
+                                " and artista.id = ?1 " +
+                                "group by album.id " +
+                                "order by " + orderBy
+                )
+                .setFirstResult(pageable.getPageNumber())
+                .setMaxResults(pageable.getPageSize());
+
+        query.setParameter(1, id);
+
+        List<Object[]> objects = query.getResultList();
+
+       return findRelationGroup(pageable, objetListToAlbumList(objects));
+    }
+
+    private List<Album> objetListToAlbumList(List<Object[]> rawResult) {
         var albums = new ArrayList<Album>();
         for (int i = 0; i < rawResult.size(); i++) {
             var album = Album.builder()
@@ -71,5 +86,20 @@ public class CustomAlbumRepositoryImpl implements CustomAlbumRepository {
         }
 
         return albums;
+    }
+
+    private Page<Album> findRelationGroup(Pageable pageable, List<Album> albums) {
+        for (var album : albums) {
+            var albumSalvo = entityManager.find(Album.class, album.getID());
+
+            if(Objects.isNull(albumSalvo)) {
+                continue;
+            }
+
+            album.setMusicas(albumSalvo.getMusicas());
+            album.setParticipantes(albumSalvo.getParticipantes());
+        }
+
+        return new PageImpl<Album>(albums, pageable, albums.size());
     }
 }

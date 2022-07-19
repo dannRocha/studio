@@ -1,6 +1,7 @@
 package com.album.musica.controllers;
 
 import com.album.musica.dto.ArtistaCadastroDTO;
+import com.album.musica.services.AlbumService;
 import com.album.musica.services.ArtistaService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import javax.validation.Valid;
 public class ArtistaController {
 
     private final ArtistaService service;
+    private final AlbumService albumService;
 
     @PostMapping
     public ResponseEntity<?> registarArtista(@Valid @RequestBody ArtistaCadastroDTO artista) {
@@ -29,6 +31,14 @@ public class ArtistaController {
     @GetMapping("{id}")
     public ResponseEntity<?> buscarArtistarPorID(@PathVariable Long id) {
         return ResponseEntity.ok(service.buscarArtistaPorId(id));
+    }
+
+    @GetMapping("{id}/album")
+    public ResponseEntity<?> buscarArtistarPorID(
+            @PathVariable Long id,
+            @PageableDefault(sort = "nome", page = 0, size = 10, direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity
+                .ok(albumService.buscarAlbumPorArtistaId(pageable, id));
     }
 
     @GetMapping

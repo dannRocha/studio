@@ -39,7 +39,7 @@ public class ArtistaService {
         return artistaRepository.findById(id)
                 .map(ArtistaMapper::entityArtistaDTO)
                 .orElseThrow(() -> {
-                    throw new EntityNotFoundException(String.format("artista com %d não encontrado", id));
+                    throw new EntityNotFoundException(String.format("artista com ID %d não encontrado", id));
                 });
     }
 

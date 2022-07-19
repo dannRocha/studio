@@ -19,6 +19,8 @@ import java.util.List;
 public class AlbumService {
 
     private final AlbumRepository repository;
+    private final ArtistaService artistaService;
+
     public AlbumDTO salvarAlbum(AlbumCadastroDTO album) {
         var albumEntity = AlbumMapper.DTOCadastroToEntity(album);
         return AlbumMapper.entityToDTO(repository.save(albumEntity));
@@ -49,6 +51,12 @@ public class AlbumService {
         albumSalvo.setNome(albumEntity.getNome());
 
         return AlbumMapper.entityToDTO(repository.save(albumSalvo));
+    }
+
+    public Page<AlbumDTO> buscarAlbumPorArtistaId(Pageable pageable, Long id) {
+        artistaService.buscarArtistaPorId(id);
+        return repository.findAllAndOrderByArtista(pageable, id)
+                .map(AlbumMapper::entityToDTO);
     }
 }
 

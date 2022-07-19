@@ -6,4 +6,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface CustomAlbumRepository {
     Page<Album> findAllAndOrder(Pageable pageable);
+    Page<Album> findAllAndOrderByArtista(Pageable pageable, Long id);
 }
